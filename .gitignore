@@ -190,3 +190,4 @@ Temporary Items
 /.build/
 *.zip
 index.js
+.idea
