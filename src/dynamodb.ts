@@ -25,8 +25,8 @@ export class Dynamo {
      * @param {DateTime} date A Luxon Datetime.
      * @returns {string}
      */
-    public static async toCVSDate(date: DateTime): Promise<string> {
-        return await date.toISO({ includeOffset: false }) + "Z";
+    public static toCVSDate(date: DateTime): string {
+        return date.toISO({ includeOffset: false }) + "Z";
     }
 
     /**********************************************************
@@ -62,7 +62,7 @@ export class Dynamo {
             TableName: this.tableName,
             FilterExpression: "startTime >= :today",
             ExpressionAttributeValues: {
-                ":today": { S: await Dynamo.toCVSDate(startOfDay) }
+                ":today": { S: Dynamo.toCVSDate(startOfDay) }
             }
         };
         const result = await this.scan(query);
@@ -82,7 +82,7 @@ export class Dynamo {
             TableName: this.tableName,
             FilterExpression: "startTime <= :tenHours and endTime = :NULL",
             ExpressionAttributeValues: {
-                ":tenHours": { S: await Dynamo.toCVSDate(tenHoursAgo) },
+                ":tenHours": { S: Dynamo.toCVSDate(tenHoursAgo) },
                 ":NULL": { NULL: true }
             }
         };
