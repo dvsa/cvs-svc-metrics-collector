@@ -187,3 +187,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+/.build/
+*.zip
+index.js
+.idea
