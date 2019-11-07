@@ -14,11 +14,12 @@ describe("The CloudWatch class", () => {
     it("should send visit metrics", async () => {
         const visitsToday = 42;
         const oldVisits = 0;
+        const openVisits = 5;
         const pSpy = sinon.fake.resolves({});
         AWSMock.setSDKInstance(AWS);
         AWSMock.mock("CloudWatch", "putMetricData", pSpy);
-        const res = await cw.sendVisits(visitsToday, oldVisits);
-        expect(res).toBe(`visits: ${visitsToday}, oldVisits: ${oldVisits}`);
+        const res = await cw.sendVisits(visitsToday, oldVisits, openVisits);
+        expect(res).toBe(`visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`);
         expect(pSpy.calledOnce).toBeTruthy();
         AWSMock.restore("CloudWatch");
     });

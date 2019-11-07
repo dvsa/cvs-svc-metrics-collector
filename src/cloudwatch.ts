@@ -22,9 +22,10 @@ export class CW {
      * @async
      * @param visitsToday Number of visits since 00:00 UTC today.
      * @param oldVisits Number of visits since now UTC-10 hours.
+     * @param openVisits Amount of open visits right now.
      * @returns {string} Combination of visit metrics for response.
      */
-    public async sendVisits(visitsToday: number, oldVisits: number): Promise<string> {
+    public async sendVisits(visitsToday: number, oldVisits: number, openVisits: number): Promise<string> {
         const client: CloudWatch = AWSXRay.captureAWSClient(new CloudWatch(this.config));
         const timestamp: Date = this.now.toJSDate();
         const params: PutMetricDataInput = {
@@ -53,11 +54,23 @@ export class CW {
                     Timestamp: timestamp,
                     Value: oldVisits,
                     Unit: "Count"
+                },
+                {
+                    MetricName: "OpenVisits",
+                    Dimensions: [
+                        {
+                            Name: "Environment",
+                            Value: this.branch
+                        }
+                    ],
+                    Timestamp: timestamp,
+                    Value: openVisits,
+                    Unit: "Count"
                 }
             ]
         };
         await client.putMetricData(params).promise();
-        const resp: string = `visits: ${visitsToday}, oldVisits: ${oldVisits}`;
+        const resp: string = `visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`;
         cwLogger.info(resp);
         return resp;
     }

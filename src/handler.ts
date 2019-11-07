@@ -26,8 +26,8 @@ export const handler: CloudWatchLogsHandler = async (event: CloudWatchLogsEvent,
     const cw = new CW();
     if (/\/aws\/lambda\/activities-[\w-]+/.test(log.logGroup)) {
         const dynamo = new Dynamo();
-        const visits = await Promise.all([dynamo.getVisits(), dynamo.getOldVisits()]);
-        handlerLogger.info(await cw.sendVisits(visits[0], visits[1]));
+        const visits = await Promise.all([dynamo.getVisits(), dynamo.getOldVisits(), dynamo.getOldVisits()]);
+        handlerLogger.info(await cw.sendVisits(visits[0], visits[1], visits[2]));
     }
     handlerLogger.info(await cw.sendTimeouts(log.logGroup, log.logEvents));
 };

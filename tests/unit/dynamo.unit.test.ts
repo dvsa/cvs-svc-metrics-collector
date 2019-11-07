@@ -36,4 +36,10 @@ describe("The dynamodb class", () => {
        expect(res).toBe(1);
        expect(scan.calledOnce).toBeTruthy();
     });
+    it("should return a count of open visits", async () => {
+        const scan = sandbox.stub(Dynamo.prototype, "scanCount").resolves(1);
+        const res = await ddb.getOpenVisits();
+        expect(res).toBe(1);
+        expect(scan.calledOnce).toBeTruthy();
+    });
 });

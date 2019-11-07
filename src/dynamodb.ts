@@ -90,4 +90,23 @@ export class Dynamo {
         dynamoLogger.info(`Total old visits older than ${tenHoursAgo}: ${result}`);
         return result;
     }
+
+    /**
+     * Retrieves the amount of open visits.
+     * @public
+     * @returns {number} Number of visits.
+     */
+    public async getOpenVisits(): Promise<number> {
+        dynamoLogger.info(`Retrieving total open visits`);
+        const query: ScanInput = {
+            TableName: this.tableName,
+            FilterExpression: "endTime = :NULL",
+            ExpressionAttributeValues: {
+                ":NULL": { NULL: true }
+            }
+        };
+        const result = await this.scanCount(query);
+        dynamoLogger.info(`Total open visits: ${result}`);
+        return result;
+    }
 }
