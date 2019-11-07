@@ -1,7 +1,7 @@
 {
   "name": "cvs-svc-metrics-collector",
   "version": "1.0.0",
-  "description": "Collects metrics from dynamodb",
+  "description": "Collects metrics from dynamodb and pushes to CloudWatch",
   "author": "Martin Kemp <martinkemp@deloitte.co.uk>",
   "license": "MIT",
   "repository": {
@@ -13,25 +13,25 @@
     "build": "npx tsc --rootDir ./ --outDir .build/ --sourceMap false",
     "clean": "rm -rf .build/",
     "coverage": "jest --coverage",
-    "local-package": "yarn run build && yarn run package",
+    "local-package": "yarn build && yarn package",
     "package": "mkdir ${ZIP_NAME} && cp package.json yarn.lock ${ZIP_NAME} && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && yarn install --prod && rm package.json yarn.lock && zip -qr ../${ZIP_NAME}.zip . && cd .. && rm -rf ${ZIP_NAME}",
-    "sonar-scanner": "echo 'not implemented'",
+    "sonar-scanner": "yarn tslint && yarn test && sonar-scanner",
     "test": "jest -c jest.config.js",
-    "test-i": "jest -c jest.config.int.js"
+    "test-i": "echo 'not implemented' #jest -c jest.config.int.js",
+    "tslint": "tslint src/**/*.ts tests/**/*.ts --out .reports/lint_issues.json"
   },
   "main": "src/handler.js",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.31",
     "@types/jest": "^24.0.18",
-    "@types/lambda-tester": "^3.6.0",
     "@types/luxon": "^1.15.2",
     "@types/node": "^12.7.5",
     "@types/node-gzip": "^1.1.0",
     "@types/sinon": "^7.5.0",
     "aws-lambda-mock-context": "^3.2.1",
+    "aws-sdk-mock": "^4.5.0",
     "jest": "^24.9.0",
     "jest-sonar-reporter": "^2.0.0",
-    "lambda-tester": "^3.6.0",
     "sinon": "^7.5.0",
     "ts-jest": "^24.1.0",
     "tslint": "^5.20.0",
@@ -40,10 +40,15 @@
   },
   "dependencies": {
     "aws-lambda": "^0.1.2",
-    "aws-sdk": "^2.530.0",
+    "aws-sdk": "^2.566.0",
     "aws-xray-sdk": "^2.3.6",
     "luxon": "^1.17.3",
     "node-gzip": "^1.1.2",
     "typescript-logging": "^0.6.3"
+  },
+  "jestSonar": {
+    "reportPath": ".reports",
+    "reportFile": "test-report.xml",
+    "indent": 4
   }
 }

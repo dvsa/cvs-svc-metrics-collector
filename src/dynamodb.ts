@@ -14,8 +14,8 @@ export class Dynamo {
     private readonly numOfScanners: number;
 
     public constructor(config?: ClientConfiguration, branch?: string, numOfScanners: number = 4) {
-        this.config = config || { region: process.env.AWS_REGION || "eu-west-1" };
-        this.branch = branch || process.env.BRANCH || "local";
+        this.config = config || { region: process.env.AWS_REGION || "eu-west-1"};
+        this.branch = branch || (process.env.BRANCH || "local").toLocaleLowerCase();
         this.tableName = `cvs-${this.branch.toLowerCase()}-activities`;
         this.numOfScanners = numOfScanners;
     }
@@ -30,14 +30,14 @@ export class Dynamo {
     }
 
     /**********************************************************
-     * Runs a scan against a DynamoDB table specified in {@link ScanInput}.
-     * @private
+     * Runs a scan against a DynamoDB table specified in {@link ScanInput} and returns the count of records returned.
+     * @public
      * @see getVisits()
      * @see getOldVisits()
      * @param {ScanInput} query The scan input for the request.
      * @returns {Promise<number>} Count of records from the scan.
      */
-    private async scan(query: ScanInput): Promise<number> {
+    public async scanCount(query: ScanInput): Promise<number> {
         const client: DynamoDB = AWSXRay.captureAWSClient(new DynamoDB(this.config));
         const scanners: Array<Promise<number>> = [];
         while (scanners.length < this.numOfScanners) {
@@ -51,7 +51,7 @@ export class Dynamo {
     }
 
     /**
-     * Retrieves the number of visits since 00:00 UTC today.
+     * Retrieves the amount of visits since 00:00 UTC today.
      * @public
      * @returns {number} Number of visits.
      */
@@ -65,13 +65,13 @@ export class Dynamo {
                 ":today": { S: Dynamo.toCVSDate(startOfDay) }
             }
         };
-        const result = await this.scan(query);
+        const result = await this.scanCount(query);
         dynamoLogger.info(`Total visits for ${startOfDay}: ${result}`);
         return result;
     }
 
     /**
-     * Retrieves the number of visits opened older than 10 hours.
+     * Retrieves the amount of visits opened older than 10 hours.
      * @public
      * @returns {number} Number of visits.
      */
@@ -86,7 +86,7 @@ export class Dynamo {
                 ":NULL": { NULL: true }
             }
         };
-        const result = await this.scan(query);
+        const result = await this.scanCount(query);
         dynamoLogger.info(`Total old visits older than ${tenHoursAgo}: ${result}`);
         return result;
     }

@@ -188,6 +188,9 @@ Temporary Items
 .apdisk
 
 /.build/
+/.reports/
 *.zip
 index.js
-.idea
+/.idea/
+/.scannerwork/
+/test-report.xml
