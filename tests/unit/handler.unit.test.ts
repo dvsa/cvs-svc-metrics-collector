@@ -1,12 +1,24 @@
 import { handler } from "../../src/handler";
-import { CloudWatchLogsDecodedData } from "aws-lambda";
-import { gzip } from "node-gzip";
+import { CloudWatchLogsDecodedData, FirehoseTransformationEvent } from "aws-lambda";
 import { Dynamo } from "../../src/dynamodb";
 import { CW } from "../../src/cloudwatch";
-import mockContext = require("aws-lambda-mock-context");
+import { gzip } from "pako";
 
 
-const event: CloudWatchLogsDecodedData = {
+const FHEvent: FirehoseTransformationEvent = {
+  deliveryStreamArn: "",
+  invocationId: "",
+  region: "",
+  records: [
+    {
+      recordId: "",
+      approximateArrivalTimestamp: 0,
+      data: ""
+    }
+  ]
+};
+
+const logs: CloudWatchLogsDecodedData = {
   messageType: "DATA_MESSAGE",
   owner: "123456789123",
   logGroup: "testLogGroup",
@@ -18,19 +30,17 @@ const event: CloudWatchLogsDecodedData = {
   ]
 };
 
-async function encodeEvent(ev: CloudWatchLogsDecodedData) {
-  return (await gzip(JSON.stringify(ev))).toString("base64");
-}
-
 const getVisitsMock = jest.fn().mockImplementation(() => 0);
 const getOldVisitsMock = jest.fn().mockImplementation(() => 0);
 const getOpenVisitsMock = jest.fn().mockImplementation(() => 0);
 const sendVisitsMock = jest.fn().mockImplementation(() => "visits: 0, oldVisits: 0");
 let sendTimeoutsMock = jest.fn().mockImplementation(() => "testLogGroup: 0");
+const failTimeoutsMock = jest.fn().mockImplementation(() => {
+  throw new Error("This is a fake error");
+});
 
 describe("The lambda handler", () => {
   process.env.BRANCH = "local";
-  const ctx = mockContext();
   Dynamo.prototype.getVisits = getVisitsMock;
   Dynamo.prototype.getOldVisits = getOldVisitsMock;
   Dynamo.prototype.getOpenVisits = getOpenVisitsMock;
@@ -39,25 +49,43 @@ describe("The lambda handler", () => {
 
   describe("with a valid event", () => {
     it("should handle the incoming event", async () => {
-      await handler({ awslogs: { data: await encodeEvent(event) } }, ctx, () => void 0);
+      const ev = { ...FHEvent };
+      ev.records[0].data = Buffer.from(gzip(JSON.stringify(logs))).toString("base64");
+      await handler(ev);
       expect(getVisitsMock).not.toHaveBeenCalled();
       expect(getOldVisitsMock).not.toHaveBeenCalled();
       expect(getOpenVisitsMock).not.toHaveBeenCalled();
-      expect(sendTimeoutsMock).toHaveBeenCalledWith(event.logGroup, event.logEvents);
+      expect(sendTimeoutsMock).toHaveBeenCalledWith(logs.logGroup, logs.logEvents);
+    });
+  });
+  describe("when a function fails", () => {
+    beforeEach(() => {
+      CW.prototype.sendTimeouts = failTimeoutsMock;
+    });
+    it("should return the data with ProcessingFailed", async () => {
+      expect.assertions(1);
+      const ev = { ...FHEvent };
+      ev.records[0].data = Buffer.from(gzip(JSON.stringify(logs))).toString("base64");
+      const resp = await handler(ev);
+      expect(resp.records[0].result).toEqual("ProcessingFailed");
+    });
+    afterEach(() => {
+      CW.prototype.sendTimeouts = sendTimeoutsMock;
     });
   });
   describe("when it is handling the activities logs", () => {
-    const act: CloudWatchLogsDecodedData = { ...event };
-    act.logGroup = "/aws/lambda/activities-develop";
     sendTimeoutsMock = jest.fn().mockImplementation(() => "/aws/lambda/activities-develop: 0");
     CW.prototype.sendTimeouts = sendTimeoutsMock;
     it("should retrieve the visit stats", async () => {
-      await handler({ awslogs: { data: await encodeEvent(act) } }, ctx, () => void 0);
+      const ev = { ...FHEvent };
+      const lgs = { ...logs };
+      lgs.logGroup = "/aws/lambda/activities-develop";
+      ev.records[0].data = Buffer.from(gzip(JSON.stringify(lgs))).toString("base64");
+      await handler(ev);
       expect(getVisitsMock).toHaveBeenCalled();
       expect(getOldVisitsMock).toHaveBeenCalled();
       expect(getOpenVisitsMock).toHaveBeenCalled();
-      expect(sendTimeoutsMock).toHaveBeenCalledWith(act.logGroup, act.logEvents);
+      expect(sendTimeoutsMock).toHaveBeenCalledWith(lgs.logGroup, lgs.logEvents);
     });
   });
 });
-
