@@ -24,7 +24,7 @@
   "main": "src/handler.js",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.37",
-    "@types/jest": "^24.0.23",
+    "@types/jest": "^25.1.4",
     "@types/luxon": "^1.21.0",
     "@types/node": "^10.17.6",
     "@types/node-gzip": "^1.1.0",
