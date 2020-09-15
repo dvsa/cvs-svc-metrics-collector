@@ -20,16 +20,21 @@ export class Dynamo {
 
   /**
    * Returns the date formatted to CVS project standard.
+   *
    * @param {DateTime} date A Luxon Datetime.
-   * @returns {string}
+   * @returns {string} The formatted date
    */
-  public static toCVSDate(date: DateTime): string {
+  public static async toCVSDate(date: DateTime): Promise<string> {
     return date.toISO({ includeOffset: false }) + "Z";
   }
 
   /**
    * Returns the count of records as per the input
+   *
+   * @private
+   * @async
    * @param {ScanInput} scanInput The input for the scan
+   * @returns {number} The count returned from the scan
    */
   private async scanDB(scanInput: ScanInput): Promise<number> {
     const client = AWSXRay.captureAWSClient(new DynamoDB(this.config));
@@ -46,9 +51,11 @@ export class Dynamo {
     return count;
   }
 
-  /**********************************************************
+  /**
    * Runs a scan against a DynamoDB table specified in {@link ScanInput} and returns the count of records returned.
+   *
    * @public
+   * @async
    * @see getVisits()
    * @see getOldVisits()
    * @param {ScanInput} query The scan input for the request.
@@ -67,7 +74,9 @@ export class Dynamo {
 
   /**
    * Retrieves the amount of visits since 00:00 UTC today.
+   *
    * @public
+   * @async
    * @returns {number} Number of visits.
    */
   public async getVisits(): Promise<number> {
@@ -77,7 +86,7 @@ export class Dynamo {
       TableName: this.tableName,
       FilterExpression: "startTime >= :today and activityType = :visit",
       ExpressionAttributeValues: {
-        ":today": { S: Dynamo.toCVSDate(startOfDay) },
+        ":today": { S: await Dynamo.toCVSDate(startOfDay) },
         ":visit": { S: "visit" },
       },
     };
@@ -88,7 +97,9 @@ export class Dynamo {
 
   /**
    * Retrieves the amount of visits opened older than 10 hours.
+   *
    * @public
+   * @async
    * @returns {number} Number of visits.
    */
   public async getOldVisits(): Promise<number> {
@@ -98,7 +109,7 @@ export class Dynamo {
       TableName: this.tableName,
       FilterExpression: "startTime <= :tenHours and endTime = :NULL and activityType = :visit",
       ExpressionAttributeValues: {
-        ":tenHours": { S: Dynamo.toCVSDate(tenHoursAgo) },
+        ":tenHours": { S: await Dynamo.toCVSDate(tenHoursAgo) },
         ":NULL": { NULL: true },
         ":visit": { S: "visit" },
       },
@@ -110,7 +121,9 @@ export class Dynamo {
 
   /**
    * Retrieves the amount of open visits.
+   *
    * @public
+   * @async
    * @returns {number} Number of visits.
    */
   public async getOpenVisits(): Promise<number> {

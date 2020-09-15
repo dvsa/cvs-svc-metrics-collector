@@ -29,7 +29,13 @@ const logs: CloudWatchLogsDecodedData = {
   ],
 };
 
-async function encodeEvent(ev: CloudWatchLogsDecodedData) {
+/**
+ * Encodes the test event as if it was from Firehose
+ *
+ * @param {CloudWatchLogsDecodedData} ev The log data to be encoded
+ * @returns {string} The encoded log data
+ */
+async function encodeEvent(ev: CloudWatchLogsDecodedData): Promise<string> {
   return (await gzip(JSON.stringify(ev))).toString("base64");
 }
 

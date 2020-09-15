@@ -12,12 +12,12 @@ export class CW {
 
   /**
    * Pushes the visit metrics to CloudWatch.
+   *
    * @public
    * @async
-   * @param visitsToday Number of visits since 00:00 UTC today.
-   * @param oldVisits Number of visits since now UTC-10 hours.
-   * @param openVisits Amount of open visits right now.
-   * @returns {string} Combination of visit metrics for response.
+   * @param {number} visitsToday Number of visits since 00:00 UTC today.
+   * @param {number} oldVisits Number of visits since now UTC-10 hours.
+   * @param {number} openVisits Amount of open visits right now.
    */
   public async sendVisits(visitsToday: number, oldVisits: number, openVisits: number): Promise<void> {
     const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
@@ -69,9 +69,9 @@ export class CW {
 
   /**
    * Pushes Timeout metrics to CloudWatch
-   * @param {string} logGroup
-   * @param {CloudWatchLogsLogEvent[]} logEvents
-   * @returns {string} Total timeout count for the service
+   *
+   * @param {string} logGroup The service to be measured
+   * @param {CloudWatchLogsLogEvent[]} logEvents An array of logs to check
    */
   public async sendTimeouts(logGroup: string, logEvents: CloudWatchLogsLogEvent[]): Promise<void> {
     const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));

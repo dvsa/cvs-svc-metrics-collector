@@ -10,6 +10,12 @@ export const handlerLogger = new Category("Handler");
 export const dynamoLogger = new Category("DynamoDB", handlerLogger);
 export const cwLogger = new Category("CloudWatch", handlerLogger);
 
+/**
+ * Decodes the base64 event data and decompresses it.
+ *
+ * @param {string} data Base64 encoded data from firehose
+ * @returns {CloudWatchLogsDecodedData} The decoded data
+ */
 async function decodeEventData(data: string): Promise<CloudWatchLogsDecodedData> {
   const unzipped = (await ungzip(Buffer.from(data, "base64"))).toString();
   handlerLogger.info(unzipped);
@@ -17,9 +23,11 @@ async function decodeEventData(data: string): Promise<CloudWatchLogsDecodedData>
 }
 
 /**
+ * The lambda handler for metrics collector, no transformation of the data happens as this only generates metrics.
+ *
  * @param {FirehoseTransformationEvent} event The expected event from Firehose
  * @param {Context | undefined} context The context of the running lambda
- * @returns {FirehoseTransformationResult}
+ * @returns {FirehoseTransformationResult} The result to return to Firehose after processing.
  */
 export const handler = async (event: FirehoseTransformationEvent, context?: Context | undefined): Promise<FirehoseTransformationResult> => {
   try {
