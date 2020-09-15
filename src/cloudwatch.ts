@@ -10,7 +10,6 @@ export class CW {
   private readonly branch: string = (process.env.BRANCH ?? "local").toLocaleLowerCase();
   private readonly now: DateTime = DateTime.utc();
 
-
   /**
    * Pushes the visit metrics to CloudWatch.
    * @public
@@ -31,38 +30,38 @@ export class CW {
           Dimensions: [
             {
               Name: "Environment",
-              Value: this.branch
-            }
+              Value: this.branch,
+            },
           ],
           Timestamp: timestamp,
           Value: visitsToday,
-          Unit: "Count"
+          Unit: "Count",
         },
         {
           MetricName: "OldVisits",
           Dimensions: [
             {
               Name: "Environment",
-              Value: this.branch
-            }
+              Value: this.branch,
+            },
           ],
           Timestamp: timestamp,
           Value: oldVisits,
-          Unit: "Count"
+          Unit: "Count",
         },
         {
           MetricName: "OpenVisits",
           Dimensions: [
             {
               Name: "Environment",
-              Value: this.branch
-            }
+              Value: this.branch,
+            },
           ],
           Timestamp: timestamp,
           Value: openVisits,
-          Unit: "Count"
-        }
-      ]
+          Unit: "Count",
+        },
+      ],
     };
     await client.putMetricData(params).promise();
     cwLogger.info(`visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`);
@@ -77,7 +76,7 @@ export class CW {
   public async sendTimeouts(logGroup: string, logEvents: CloudWatchLogsLogEvent[]): Promise<void> {
     const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
     const timestamp: Date = this.now.toJSDate();
-    let timeoutCount: number = 0;
+    let timeoutCount = 0;
     for (const logEvent of logEvents) {
       if (new RE2(".*Task timed out.*").test(logEvent.message)) {
         timeoutCount += 1;
@@ -91,18 +90,18 @@ export class CW {
           Dimensions: [
             {
               Name: "Environment",
-              Value: this.branch
+              Value: this.branch,
             },
             {
               Name: "Service",
-              Value: logGroup
-            }
+              Value: logGroup,
+            },
           ],
           Timestamp: timestamp,
           Value: timeoutCount,
-          Unit: "Count"
-        }
-      ]
+          Unit: "Count",
+        },
+      ],
     };
     await client.putMetricData(params).promise();
     cwLogger.info(`${logGroup}: ${timeoutCount}`);

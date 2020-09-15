@@ -56,9 +56,9 @@ export class Dynamo {
    */
   public async scanCount(query: ScanInput): Promise<number> {
     const scanners: Promise<number>[] = [];
-    while (scanners.length < this.numOfScanners) {
+    for (let i = 0; i < this.numOfScanners; i++) {
       const scanInput = query;
-      scanInput.Segment = scanners.length;
+      scanInput.Segment = i;
       scanInput.TotalSegments = this.numOfScanners;
       scanners.push(this.scanDB(scanInput));
     }
@@ -78,8 +78,8 @@ export class Dynamo {
       FilterExpression: "startTime >= :today and activityType = :visit",
       ExpressionAttributeValues: {
         ":today": { S: Dynamo.toCVSDate(startOfDay) },
-        ":visit": { S: "visit" }
-      }
+        ":visit": { S: "visit" },
+      },
     };
     const result = await this.scanCount(query);
     dynamoLogger.info(`Total visits for ${startOfDay}: ${result}`);
@@ -100,8 +100,8 @@ export class Dynamo {
       ExpressionAttributeValues: {
         ":tenHours": { S: Dynamo.toCVSDate(tenHoursAgo) },
         ":NULL": { NULL: true },
-        ":visit": { S: "visit" }
-      }
+        ":visit": { S: "visit" },
+      },
     };
     const result = await this.scanCount(query);
     dynamoLogger.info(`Total old visits older than ${tenHoursAgo}: ${result}`);
@@ -120,8 +120,8 @@ export class Dynamo {
       FilterExpression: "endTime = :NULL and activityType = :visit",
       ExpressionAttributeValues: {
         ":NULL": { NULL: true },
-        ":visit": { S: "visit" }
-      }
+        ":visit": { S: "visit" },
+      },
     };
     const result = await this.scanCount(query);
     dynamoLogger.info(`Total open visits: ${result}`);

@@ -1,0 +1,23 @@
+{
+    "env": {
+        "commonjs": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
+        "prettier/@typescript-eslint"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2019
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "node",
+        "promise"
+    ],
+    "rules": {
+    }
+}

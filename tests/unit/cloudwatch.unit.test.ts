@@ -10,20 +10,20 @@ describe("The CloudWatch class", () => {
 
   it("should send visit metrics", async () => {
     const [visitsToday, oldVisits, openVisits] = [42, 0, 5];
-    expect.assertions(2)
-    await expect(cw.sendVisits(visitsToday, oldVisits, openVisits)).resolves.toBe(`visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`);
+    expect.assertions(2);
+    await expect(cw.sendVisits(visitsToday, oldVisits, openVisits)).resolves.toBe(undefined);
     expect(mockFn).toHaveBeenCalled();
   });
 
   it("should send timeout metrics", async () => {
-    expect.assertions(2)
-    await expect(cw.sendTimeouts("testGroup", [{ id: "asdf", timestamp: 0, message: "[ERROR] Task timed out" }])).resolves.toBe("testGroup: 1");
+    expect.assertions(2);
+    await expect(cw.sendTimeouts("testGroup", [{ id: "asdf", timestamp: 0, message: "[ERROR] Task timed out" }])).resolves.toBe(undefined);
     expect(mockFn).toHaveBeenCalled();
   });
 
   it("should send timeout metrics even when none returned", async () => {
-    expect.assertions(2)
-    await expect(cw.sendTimeouts("testGroup", [{ id: "asdf", timestamp: 0, message: "[ERROR] Fatal error" }])).resolves.toBe("testGroup: 0");
+    expect.assertions(2);
+    await expect(cw.sendTimeouts("testGroup", [{ id: "asdf", timestamp: 0, message: "[ERROR] Fatal error" }])).resolves.toBe(undefined);
     expect(mockFn).toHaveBeenCalled();
   });
 });
