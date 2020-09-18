@@ -59,6 +59,7 @@ export const handler = async (event: FirehoseTransformationEvent, context?: Cont
     } as FirehoseTransformationResult;
   } catch (e) {
     handlerLogger.error("Handler error:", e);
+    handlerLogger.info(JSON.stringify(event));
     return {
       records: event.records.map((record) => ({
         recordId: record.recordId,
