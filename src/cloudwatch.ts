@@ -21,58 +21,54 @@ export class CW {
    * @param {Subsegment} parentSubSeg The parent AWS X-Ray subsegment
    */
   public async sendVisits(visitsToday: number, oldVisits: number, openVisits: number, parentSubSeg?: Subsegment): Promise<void> {
-    await AWSXRay.captureAsyncFunc(
-      "sendVisits",
-      async (subsegment) => {
-        const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
-        const timestamp: Date = this.now.toJSDate();
-        const params: PutMetricDataInput = {
-          Namespace: "CVS",
-          MetricData: [
+    const sendVisitsSS = parentSubSeg?.addNewSubsegment("sendVisits");
+    const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
+    const timestamp: Date = this.now.toJSDate();
+    const params: PutMetricDataInput = {
+      Namespace: "CVS",
+      MetricData: [
+        {
+          MetricName: "VisitsToday",
+          Dimensions: [
             {
-              MetricName: "VisitsToday",
-              Dimensions: [
-                {
-                  Name: "Environment",
-                  Value: this.branch,
-                },
-              ],
-              Timestamp: timestamp,
-              Value: visitsToday,
-              Unit: "Count",
-            },
-            {
-              MetricName: "OldVisits",
-              Dimensions: [
-                {
-                  Name: "Environment",
-                  Value: this.branch,
-                },
-              ],
-              Timestamp: timestamp,
-              Value: oldVisits,
-              Unit: "Count",
-            },
-            {
-              MetricName: "OpenVisits",
-              Dimensions: [
-                {
-                  Name: "Environment",
-                  Value: this.branch,
-                },
-              ],
-              Timestamp: timestamp,
-              Value: openVisits,
-              Unit: "Count",
+              Name: "Environment",
+              Value: this.branch,
             },
           ],
-        };
-        subsegment?.addMetadata("metricsParams", params);
-        await client.putMetricData(params).promise();
-        cwLogger.info(`visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`);
-      },
-      parentSubSeg
-    );
+          Timestamp: timestamp,
+          Value: visitsToday,
+          Unit: "Count",
+        },
+        {
+          MetricName: "OldVisits",
+          Dimensions: [
+            {
+              Name: "Environment",
+              Value: this.branch,
+            },
+          ],
+          Timestamp: timestamp,
+          Value: oldVisits,
+          Unit: "Count",
+        },
+        {
+          MetricName: "OpenVisits",
+          Dimensions: [
+            {
+              Name: "Environment",
+              Value: this.branch,
+            },
+          ],
+          Timestamp: timestamp,
+          Value: openVisits,
+          Unit: "Count",
+        },
+      ],
+    };
+    sendVisitsSS?.addMetadata("metricsParams", params);
+    await client.putMetricData(params).promise();
+    cwLogger.info(`visits: ${visitsToday}, oldVisits: ${oldVisits}, openVisits: ${openVisits}`);
+    sendVisitsSS?.close();
   }
 
   /**
@@ -85,43 +81,39 @@ export class CW {
    * @param {Subsegment} parentSubSeg The parent AWS X-Ray subsegment
    */
   public async sendTimeouts(logGroup: string, logEvents: CloudWatchLogsLogEvent[], parentSubSeg?: Subsegment): Promise<void> {
-    await AWSXRay.captureAsyncFunc(
-      "sendVisits",
-      async (subsegment) => {
-        const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
-        const timestamp: Date = this.now.toJSDate();
-        let timeoutCount = 0;
-        for (const logEvent of logEvents) {
-          if (new RE2(".*Task timed out.*").test(logEvent.message)) {
-            timeoutCount += 1;
-          }
-        }
-        const params: PutMetricDataInput = {
-          Namespace: "CVS",
-          MetricData: [
+    const sendTimeoutsSS = parentSubSeg?.addNewSubsegment("sendTimeouts");
+    const client = AWSXRay.captureAWSClient(new CloudWatch(this.config));
+    const timestamp: Date = this.now.toJSDate();
+    let timeoutCount = 0;
+    for (const logEvent of logEvents) {
+      if (new RE2(".*Task timed out.*").test(logEvent.message)) {
+        timeoutCount += 1;
+      }
+    }
+    const params: PutMetricDataInput = {
+      Namespace: "CVS",
+      MetricData: [
+        {
+          MetricName: "Timeouts",
+          Dimensions: [
             {
-              MetricName: "Timeouts",
-              Dimensions: [
-                {
-                  Name: "Environment",
-                  Value: this.branch,
-                },
-                {
-                  Name: "Service",
-                  Value: logGroup,
-                },
-              ],
-              Timestamp: timestamp,
-              Value: timeoutCount,
-              Unit: "Count",
+              Name: "Environment",
+              Value: this.branch,
+            },
+            {
+              Name: "Service",
+              Value: logGroup,
             },
           ],
-        };
-        subsegment?.addMetadata("metricsParams", params);
-        await client.putMetricData(params).promise();
-        cwLogger.info(`${logGroup}: ${timeoutCount}`);
-      },
-      parentSubSeg
-    );
+          Timestamp: timestamp,
+          Value: timeoutCount,
+          Unit: "Count",
+        },
+      ],
+    };
+    sendTimeoutsSS?.addMetadata("metricsParams", params);
+    await client.putMetricData(params).promise();
+    cwLogger.info(`${logGroup}: ${timeoutCount}`);
+    sendTimeoutsSS?.close();
   }
 }

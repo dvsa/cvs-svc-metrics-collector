@@ -81,26 +81,22 @@ export class Dynamo {
    * @returns {number} Number of visits.
    */
   public async getVisits(parentSubSeg?: Subsegment): Promise<number> {
-    return AWSXRay.captureAsyncFunc<Promise<number>>(
-      "getVisits",
-      async (subsegment) => {
-        dynamoLogger.info("Retrieving total visits today");
-        const startOfDay: DateTime = this.now.startOf("day");
-        const query: ScanInput = {
-          TableName: this.tableName,
-          FilterExpression: "startTime >= :today and activityType = :visit",
-          ExpressionAttributeValues: {
-            ":today": { S: await Dynamo.toCVSDate(startOfDay) },
-            ":visit": { S: "visit" },
-          },
-        };
-        subsegment?.addMetadata("query", query);
-        const result = await this.scanCount(query);
-        dynamoLogger.info(`Total visits for ${startOfDay}: ${result}`);
-        return result;
+    const visitsSS = parentSubSeg?.addNewSubsegment("getVisits");
+    dynamoLogger.info("Retrieving total visits today");
+    const startOfDay: DateTime = this.now.startOf("day");
+    const query: ScanInput = {
+      TableName: this.tableName,
+      FilterExpression: "startTime >= :today and activityType = :visit",
+      ExpressionAttributeValues: {
+        ":today": { S: await Dynamo.toCVSDate(startOfDay) },
+        ":visit": { S: "visit" },
       },
-      parentSubSeg
-    );
+    };
+    visitsSS?.addMetadata("query", query);
+    const result = await this.scanCount(query);
+    dynamoLogger.info(`Total visits for ${startOfDay}: ${result}`);
+    visitsSS?.close();
+    return result;
   }
 
   /**
@@ -112,27 +108,23 @@ export class Dynamo {
    * @returns {number} Number of visits.
    */
   public async getOldVisits(parentSubSeg?: Subsegment): Promise<number> {
-    return AWSXRay.captureAsyncFunc<Promise<number>>(
-      "getOldVisits",
-      async (subsegment) => {
-        const tenHoursAgo: DateTime = this.now.minus({ hours: 10 });
-        dynamoLogger.info(`Retrieving total open visits older than ${tenHoursAgo}`);
-        const query: ScanInput = {
-          TableName: this.tableName,
-          FilterExpression: "startTime <= :tenHours and endTime = :NULL and activityType = :visit",
-          ExpressionAttributeValues: {
-            ":tenHours": { S: await Dynamo.toCVSDate(tenHoursAgo) },
-            ":NULL": { NULL: true },
-            ":visit": { S: "visit" },
-          },
-        };
-        subsegment?.addMetadata("query", query);
-        const result = await this.scanCount(query);
-        dynamoLogger.info(`Total old visits older than ${tenHoursAgo}: ${result}`);
-        return result;
+    const oldVisitsSS = parentSubSeg?.addNewSubsegment("getOldVisits");
+    const tenHoursAgo: DateTime = this.now.minus({ hours: 10 });
+    dynamoLogger.info(`Retrieving total open visits older than ${tenHoursAgo}`);
+    const query: ScanInput = {
+      TableName: this.tableName,
+      FilterExpression: "startTime <= :tenHours and endTime = :NULL and activityType = :visit",
+      ExpressionAttributeValues: {
+        ":tenHours": { S: await Dynamo.toCVSDate(tenHoursAgo) },
+        ":NULL": { NULL: true },
+        ":visit": { S: "visit" },
       },
-      parentSubSeg
-    );
+    };
+    oldVisitsSS?.addMetadata("query", query);
+    const result = await this.scanCount(query);
+    dynamoLogger.info(`Total old visits older than ${tenHoursAgo}: ${result}`);
+    oldVisitsSS?.close();
+    return result;
   }
 
   /**
@@ -144,24 +136,20 @@ export class Dynamo {
    * @returns {number} Number of visits.
    */
   public async getOpenVisits(parentSubSeg?: Subsegment): Promise<number> {
-    return AWSXRay.captureAsyncFunc<Promise<number>>(
-      "getOpenVisits",
-      async (subsegment) => {
-        dynamoLogger.info(`Retrieving total open visits`);
-        const query: ScanInput = {
-          TableName: this.tableName,
-          FilterExpression: "endTime = :NULL and activityType = :visit",
-          ExpressionAttributeValues: {
-            ":NULL": { NULL: true },
-            ":visit": { S: "visit" },
-          },
-        };
-        subsegment?.addMetadata("query", query);
-        const result = await this.scanCount(query);
-        dynamoLogger.info(`Total open visits: ${result}`);
-        return result;
+    const openVisitsSS = parentSubSeg?.addNewSubsegment("getOpenVisits");
+    dynamoLogger.info(`Retrieving total open visits`);
+    const query: ScanInput = {
+      TableName: this.tableName,
+      FilterExpression: "endTime = :NULL and activityType = :visit",
+      ExpressionAttributeValues: {
+        ":NULL": { NULL: true },
+        ":visit": { S: "visit" },
       },
-      parentSubSeg
-    );
+    };
+    openVisitsSS?.addMetadata("query", query);
+    const result = await this.scanCount(query);
+    dynamoLogger.info(`Total open visits: ${result}`);
+    openVisitsSS?.close();
+    return result;
   }
 }
