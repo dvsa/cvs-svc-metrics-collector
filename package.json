@@ -17,7 +17,7 @@
     "local-package": "npm run build && npm run package",
     "package": "mkdir ${ZIP_NAME} && cp package.json package-lock.json ${ZIP_NAME} && cp -r .build/src/* ${ZIP_NAME}/ && cd ${ZIP_NAME} && npm ci && rm package.json package-lock.json && zip -qr ../${ZIP_NAME}.zip . && cd .. && rm -rf ${ZIP_NAME}",
     "sonar-scanner": "npm run lint && npm run test && sonar-scanner",
-    "test": "jest -c jest.config.js",
+    "test": "AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest -c jest.config.js",
     "test-i": "echo 'not implemented' #jest -c jest.config.int.js",
     "tools-setup": "echo 'Nothing to do'"
   },

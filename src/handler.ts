@@ -3,6 +3,7 @@ import { CW } from "./cloudwatch";
 import { Dynamo } from "./dynamodb";
 import { Category, CategoryConfiguration, CategoryServiceFactory, LogLevel } from "typescript-logging";
 import { ungzip } from "node-gzip";
+import AWSXRay from "aws-xray-sdk";
 import RE2 from "re2";
 
 CategoryServiceFactory.setDefaultConfiguration(new CategoryConfiguration(LogLevel.Info));
@@ -31,21 +32,38 @@ async function decodeEventData(data: string): Promise<CloudWatchLogsDecodedData>
  */
 export const handler = async (event: FirehoseTransformationEvent, context?: Context | undefined): Promise<FirehoseTransformationResult> => {
   try {
-    handlerLogger.info(`context: ${JSON.stringify(context)}`);
-    const logs: CloudWatchLogsDecodedData[] = await Promise.all(
-      event.records.map((record) => {
-        return decodeEventData(record.data);
-      })
+    const logs: CloudWatchLogsDecodedData[] = await AWSXRay.captureAsyncFunc<Promise<CloudWatchLogsDecodedData[]>>(
+      "decodeEvent",
+      async (subsegment) => {
+        handlerLogger.info(`context: ${JSON.stringify(context)}`);
+        const res = await Promise.all(
+          event.records.map((record) => {
+            return decodeEventData(record.data);
+          })
+        );
+        subsegment?.addMetadata("decodedEvent", res);
+        return res;
+      },
+      AWSXRay.getSegment()
     );
 
     const cw = new CW();
     const promises: Promise<void>[] = [];
-
+    const activityPattern = new RE2(/\/aws\/lambda\/activities-[\w-]+/);
+    // Prevent activities metrics being sent more than once.
+    let activitiesSent = false;
     for (const log of logs) {
-      if (new RE2(/\/aws\/lambda\/activities-[\w-]+/).test(log.logGroup)) {
-        const dynamo = new Dynamo();
-        const [visits, oldVisits, openVisits] = await Promise.all([dynamo.getVisits(), dynamo.getOldVisits(), dynamo.getOpenVisits()]);
-        promises.push(cw.sendVisits(visits, oldVisits, openVisits));
+      if (!activitiesSent && activityPattern.test(log.logGroup)) {
+        await AWSXRay.captureAsyncFunc(
+          "getActivities",
+          async (subsegment) => {
+            const dynamo = new Dynamo();
+            const [visits, oldVisits, openVisits] = await Promise.all([dynamo.getVisits(subsegment), dynamo.getOldVisits(subsegment), dynamo.getOpenVisits(subsegment)]);
+            promises.push(cw.sendVisits(visits, oldVisits, openVisits));
+            activitiesSent = true;
+          },
+          AWSXRay.getSegment()
+        );
       }
       promises.push(cw.sendTimeouts(log.logGroup, log.logEvents));
     }
@@ -60,6 +78,7 @@ export const handler = async (event: FirehoseTransformationEvent, context?: Cont
   } catch (e) {
     handlerLogger.error("Handler error:", e);
     handlerLogger.info(JSON.stringify(event));
+    AWSXRay.getSegment()?.addError(e);
     return {
       records: event.records.map((record) => ({
         recordId: record.recordId,
