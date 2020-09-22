@@ -64,7 +64,7 @@ describe("The lambda handler", () => {
       expect(getVisitsMock).not.toHaveBeenCalled();
       expect(getOldVisitsMock).not.toHaveBeenCalled();
       expect(getOpenVisitsMock).not.toHaveBeenCalled();
-      expect(sendTimeoutsMock).toHaveBeenCalledWith(logs.logGroup, logs.logEvents);
+      expect(sendTimeoutsMock).toHaveBeenCalledWith(logs.logGroup, logs.logEvents, undefined);
     });
   });
   describe("when a function fails", () => {
@@ -94,7 +94,7 @@ describe("The lambda handler", () => {
       expect(getVisitsMock).toHaveBeenCalled();
       expect(getOldVisitsMock).toHaveBeenCalled();
       expect(getOpenVisitsMock).toHaveBeenCalled();
-      expect(sendTimeoutsMock).toHaveBeenCalledWith(actLogs.logGroup, actLogs.logEvents);
+      expect(sendTimeoutsMock).toHaveBeenCalledWith(actLogs.logGroup, actLogs.logEvents, undefined);
     });
   });
 });
