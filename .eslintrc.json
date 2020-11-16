@@ -1,14 +1,36 @@
 {
-    "env": {
-        "commonjs": true,
-        "node": true
-    },
-    "extends": [
-        "eslint:recommended",
-        "plugin:jsdoc/recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier",
-        "prettier/@typescript-eslint"
+  "env": {
+    "commonjs": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    // copied from dvsa style guide
+    "airbnb-typescript/base",
+    // Airbnb style guide rules
+    "plugin:@typescript-eslint/recommended",
+    // ESLint Typescript plugin recommended rules
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    // Additional type-checking rules
+    "plugin:security/recommended",
+    // Security rules
+    "plugin:import/typescript"
+    // ESLint Typescript Import plugin
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2019,
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "security",
+    "import"
+  ],
+  "rules": {
+    "@typescript-eslint/quotes": [
+      "error",
+      "double"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
