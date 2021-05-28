@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.875.0",
-    "aws-xray-sdk": "^3.2.0",
+    "aws-xray-sdk": "^3.3.1",
     "luxon": "^1.26.0",
     "node-gzip": "^1.1.2",
     "re2": "^1.15.9",
