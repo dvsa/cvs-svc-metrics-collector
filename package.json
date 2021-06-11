@@ -19,7 +19,8 @@
     "sonar-scanner": "npm run lint && npm run test && sonar-scanner",
     "test": "AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest -c jest.config.js",
     "test-i": "echo 'not implemented' #jest -c jest.config.int.js",
-    "tools-setup": "echo 'Nothing to do'"
+    "tools-setup": "echo 'Nothing to do'",
+    "security-checks": "git secrets --scan && git log -p | scanrepo"
   },
   "main": "src/handler.js",
   "devDependencies": {
