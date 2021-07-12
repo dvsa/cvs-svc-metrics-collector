@@ -19,7 +19,5 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "exclude": [
-    "tests/**/*.ts"
-  ]
+  "exclude": ["tests/**/*.ts"]
 }

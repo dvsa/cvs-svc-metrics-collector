@@ -1,3 +1,4 @@
 .build
 .reports
 coverage
+node_modules
